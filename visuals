@@ -1,0 +1,435 @@
+--[[
+    Visual Fun Script - COMPLETELY FIXED
+    Uses: https://github.com/sametexe001/sametlibs
+]]
+
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/sametexe001/sametlibs/refs/heads/main/Zoophack/Library.lua"))()
+
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+
+-- ====================== STORAGE ======================
+local OriginalMaterials = {}
+local OriginalSky = nil
+local SkySpinConnection = nil
+local SkyEnforceConnection = nil
+local MaterialRefreshConnection = nil
+local SkinChangerConnection = nil
+local FastReloadConnection = nil
+
+local FogEnabled = false
+local MaterialEnabled = false
+local CurrentMaterial = Enum.Material.Concrete
+local CurrentSkyName = "Default"
+local SkySpinEnabled = false
+local SkySpinSpeed = 15
+
+-- Skin Changer Config
+getgenv().HoodCustoms = {
+    ['Skins'] = {
+        ['[Revolver]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
+        ['[DoubleBarrel]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
+        ['[SMG]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
+        ['[Shotgun]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
+        ['[Silencer]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
+        ['[TacticalShotgun]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
+        ['[Knife]'] = { ['Enabled'] = false, ['Skin'] = 'None' }
+    },
+    ['BeamChanger'] = { ['Enabled'] = false, ['Beam'] = 'None' },
+    ['FastReload'] = { ['Enabled'] = false, ['ReloadTime'] = 0.5 },
+}
+
+local BeamHashes = {
+    DoubleBarrel = '109d1326878cc594bc1bb42d126250810999782f',
+    Revolver = '539db315b53f77390c0aa74773158e25bedcdd6e',
+    Shotgun = 'b415a7273aa86cbc2adc445fde5435eb5afababa',
+    SMG = '005af87725b42ac4ca8103d11af6bf0c7d55f7b3',
+    TacticalShotgun = '109d1326878cc594bc1bb42d126250810999782f',
+}
+local BeamApplied = nil
+
+-- Save original sky
+local function saveOriginalSky()
+    local sky = Lighting:FindFirstChildOfClass("Sky")
+    if sky then
+        OriginalSky = {
+            SkyboxBk = sky.SkyboxBk, SkyboxDn = sky.SkyboxDn, SkyboxFt = sky.SkyboxFt,
+            SkyboxLf = sky.SkyboxLf, SkyboxRt = sky.SkyboxRt, SkyboxUp = sky.SkyboxUp,
+            StarCount = sky.StarCount, CelestialBodiesShown = sky.CelestialBodiesShown,
+            MoonTextureId = sky.MoonTextureId, SunTextureId = sky.SunTextureId
+        }
+    end
+end
+saveOriginalSky()
+
+-- ====================== WORKING SKYBOXES ======================
+local Skyboxes = {
+    ["Default"] = "default",
+    ["Night"] = {
+        SkyboxBk = "rbxassetid://12064107", SkyboxDn = "rbxassetid://12064152", SkyboxFt = "rbxassetid://12064121",
+        SkyboxLf = "rbxassetid://12063984", SkyboxRt = "rbxassetid://12064115", SkyboxUp = "rbxassetid://12064131"
+    },
+    ["Space"] = {
+        SkyboxBk = "rbxassetid://149397692", SkyboxDn = "rbxassetid://149397686", SkyboxFt = "rbxassetid://149397697",
+        SkyboxLf = "rbxassetid://149397684", SkyboxRt = "rbxassetid://149397688", SkyboxUp = "rbxassetid://149397702"
+    },
+    ["Sunset"] = {
+        SkyboxBk = "rbxassetid://600830446", SkyboxDn = "rbxassetid://600831635", SkyboxFt = "rbxassetid://600832720",
+        SkyboxLf = "rbxassetid://600833862", SkyboxRt = "rbxassetid://600835177", SkyboxUp = "rbxassetid://600835875"
+    },
+    -- ORANGE/APOCALYPSE (from your images)
+    ["Orange Apocalypse"] = {
+        SkyboxBk = "rbxassetid://124235923", SkyboxDn = "rbxassetid://124235917", SkyboxFt = "rbxassetid://124235926",
+        SkyboxLf = "rbxassetid://124235914", SkyboxRt = "rbxassetid://124235920", SkyboxUp = "rbxassetid://124235928"
+    },
+    ["Dusty Desert"] = {
+        SkyboxBk = "rbxassetid://260178847", SkyboxDn = "rbxassetid://260178843", SkyboxFt = "rbxassetid://260178849",
+        SkyboxLf = "rbxassetid://260178842", SkyboxRt = "rbxassetid://260178845", SkyboxUp = "rbxassetid://260178851"
+    },
+    -- PURPLE/PURPLE STORM (from your images)
+    ["Purple Storm"] = {
+        SkyboxBk = "rbxassetid://202182363", SkyboxDn = "rbxassetid://202182358", SkyboxFt = "rbxassetid://202182366",
+        SkyboxLf = "rbxassetid://202182355", SkyboxRt = "rbxassetid://202182361", SkyboxUp = "rbxassetid://202182368"
+    },
+    ["Dark Purple"] = {
+        SkyboxBk = "rbxassetid://264215036", SkyboxDn = "rbxassetid://264215033", SkyboxFt = "rbxassetid://264215034",
+        SkyboxLf = "rbxassetid://264215032", SkyboxRt = "rbxassetid://264215035", SkyboxUp = "rbxassetid://264215037"
+    },
+    ["Lavender"] = {
+        SkyboxBk = "rbxassetid://159454299", SkyboxDn = "rbxassetid://159454296", SkyboxFt = "rbxassetid://159454293",
+        SkyboxLf = "rbxassetid://159454286", SkyboxRt = "rbxassetid://159454300", SkyboxUp = "rbxassetid://159454288"
+    },
+    -- GREEN TOXIC (from your images)
+    ["Green Toxic"] = {
+        SkyboxBk = "rbxassetid://151165214", SkyboxDn = "rbxassetid://151165197", SkyboxFt = "rbxassetid://151165224",
+        SkyboxLf = "rbxassetid://151165191", SkyboxRt = "rbxassetid://151165206", SkyboxUp = "rbxassetid://151165227"
+    },
+    ["Toxic Waste"] = {
+        SkyboxBk = "rbxassetid://192096124", SkyboxDn = "rbxassetid://192095957", SkyboxFt = "rbxassetid://192096160",
+        SkyboxLf = "rbxassetid://192095935", SkyboxRt = "rbxassetid://192096058", SkyboxUp = "rbxassetid://192096184"
+    },
+    -- RED/BLOOD
+    ["Blood Red"] = {
+        SkyboxBk = "rbxassetid://401664839", SkyboxDn = "rbxassetid://401664862", SkyboxFt = "rbxassetid://401664960",
+        SkyboxLf = "rbxassetid://401664881", SkyboxRt = "rbxassetid://401664901", SkyboxUp = "rbxassetid://401664926"
+    },
+    ["Crimson"] = {
+        SkyboxBk = "rbxassetid://367686703", SkyboxDn = "rbxassetid://367686687", SkyboxFt = "rbxassetid://367686711",
+        SkyboxLf = "rbxassetid://367686682", SkyboxRt = "rbxassetid://367686691", SkyboxUp = "rbxassetid://367686717"
+    },
+    -- NEON/CYAN
+    ["Neon Blue"] = {
+        SkyboxBk = "rbxassetid://591058823", SkyboxDn = "rbxassetid://591059876", SkyboxFt = "rbxassetid://591058104",
+        SkyboxLf = "rbxassetid://591057861", SkyboxRt = "rbxassetid://591057625", SkyboxUp = "rbxassetid://591059601"
+    },
+    ["Cloudy"] = {
+        SkyboxBk = "rbxassetid://591058823", SkyboxDn = "rbxassetid://591059876", SkyboxFt = "rbxassetid://591058104",
+        SkyboxLf = "rbxassetid://591057861", SkyboxRt = "rbxassetid://591057625", SkyboxUp = "rbxassetid://591059601"
+    }
+}
+
+local function applySkybox(name)
+    for _, sky in ipairs(Lighting:GetChildren()) do
+        if sky:IsA("Sky") then sky:Destroy() end
+    end
+    local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+    if atmosphere then atmosphere:Destroy() end
+
+    if name == "Default" then
+        if OriginalSky then
+            local sky = Instance.new("Sky")
+            sky.Parent = Lighting
+            for prop, value in pairs(OriginalSky) do pcall(function() sky[prop] = value end) end
+        end
+        return
+    end
+
+    local data = Skyboxes[name]
+    if not data then return end
+
+    local sky = Instance.new("Sky")
+    sky.Parent = Lighting
+    for prop, value in pairs(data) do pcall(function() sky[prop] = value end) end
+    sky.SkyboxOrientation = Vector3.new(0, 0, 0)
+end
+
+local function startSkyEnforce()
+    if SkyEnforceConnection then SkyEnforceConnection:Disconnect() end
+    SkyEnforceConnection = RunService.Heartbeat:Connect(function()
+        if Library.Flags["SkyEnable"] and Library.Flags["SkyEnable"].Value then
+            if not Lighting:FindFirstChildOfClass("Sky") then applySkybox(CurrentSkyName) end
+        end
+    end)
+end
+startSkyEnforce()
+
+-- ====================== MATERIAL CHANGER ======================
+local function setAllMaterials(material)
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and not obj:IsDescendantOf(game.Players) then
+            if not OriginalMaterials[obj] then OriginalMaterials[obj] = obj.Material end
+            pcall(function() obj.Material = material end)
+        end
+    end
+end
+
+local function restoreMaterials()
+    for part, mat in pairs(OriginalMaterials) do
+        if part and part.Parent then pcall(function() part.Material = mat end) end
+    end
+    table.clear(OriginalMaterials)
+end
+
+MaterialRefreshConnection = workspace.DescendantAdded:Connect(function(obj)
+    if MaterialEnabled and obj:IsA("BasePart") and not obj:IsDescendantOf(game.Players) then
+        if not OriginalMaterials[obj] then OriginalMaterials[obj] = obj.Material end
+        pcall(function() obj.Material = CurrentMaterial end)
+    end
+end)
+
+-- ====================== FOG ======================
+local function setFog(enabled, color)
+    local atm = Lighting:FindFirstChildOfClass("Atmosphere")
+    if atm then atm:Destroy() end
+    if enabled then
+        Lighting.FogStart = 0; Lighting.FogEnd = 250
+        if color then Lighting.FogColor = color end
+    else
+        Lighting.FogStart = 0; Lighting.FogEnd = 100000
+    end
+end
+
+-- ====================== SKY SPIN ======================
+local function toggleSkySpin(enabled, speed)
+    if SkySpinConnection then SkySpinConnection:Disconnect(); SkySpinConnection = nil end
+    if enabled then
+        local sky = Lighting:FindFirstChildOfClass("Sky")
+        if not sky then sky = Instance.new("Sky"); sky.Parent = Lighting end
+        SkySpinConnection = RunService.RenderStepped:Connect(function(dt)
+            local current = sky.SkyboxOrientation
+            sky.SkyboxOrientation = Vector3.new(current.X, (current.Y + (speed or SkySpinSpeed) * dt) % 360, current.Z)
+        end)
+    end
+end
+
+-- ====================== SKIN CHANGER FUNCTIONS ======================
+local function ClearAdded(Handle)
+    for _, Obj in Handle:GetChildren() do
+        if Obj:GetAttribute('SkinClone') then Obj:Destroy() end
+    end
+end
+
+local function ApplySkin(Tool, GunName, SkinName)
+    if SkinName == "None" then RestoreSkin(Tool); return end
+    local Handle = Tool:FindFirstChild('Handle')
+    if not Handle then return end
+    local Tag = Handle:FindFirstChild('SkinTag')
+    if Tag and Tag.Value == SkinName then return end
+    
+    if not Handle:GetAttribute('OrigTexture') then
+        Handle:SetAttribute('OrigTexture', Handle.TextureID)
+        Handle:SetAttribute('OrigColor', Handle.Color)
+        Handle:SetAttribute('OrigMaterial', Handle.Material.Value)
+        Handle:SetAttribute('OrigTransparency', Handle.Transparency)
+    end
+    ClearAdded(Handle)
+    if not Tag then Tag = Instance.new('StringValue'); Tag.Name = 'SkinTag'; Tag.Parent = Handle end
+    Tag.Value = SkinName
+
+    local WrapGun = ReplicatedStorage:FindFirstChild('Wraps')
+    WrapGun = WrapGun and WrapGun:FindFirstChild(GunName)
+    local Wrap = WrapGun and WrapGun:FindFirstChild(SkinName)
+    if not Wrap then return end
+
+    local WrapClone = Wrap:Clone()
+    local WrapHandle = WrapClone:FindFirstChild('Handle')
+    if not WrapHandle then WrapClone:Destroy() return end
+
+    local BaseCF = WrapHandle.CFrame
+    for _, Obj in WrapHandle:GetChildren() do
+        if Obj:IsA('Sound') or Obj:IsA('BillboardGui') then continue end
+        if Obj:IsA('BasePart') then
+            local Offset = BaseCF:ToObjectSpace(Obj.CFrame)
+            Obj.Anchored = false; Obj.CanCollide = false; Obj.Massless = true
+            Obj.CFrame = Handle.CFrame * Offset
+            for _, W in Obj:GetChildren() do
+                if W:IsA('Weld') or W:IsA('WeldConstraint') then W:Destroy() end
+            end
+            local Weld = Instance.new('Weld')
+            Weld.Name = 'SkinWeld'; Weld.Part0 = Handle; Weld.Part1 = Obj
+            Weld.C0 = Offset; Weld:SetAttribute('SkinClone', true); Weld.Parent = Obj
+        end
+        Obj:SetAttribute('SkinClone', true)
+        Obj.Parent = Handle
+    end
+    Handle.TextureID = WrapHandle.TextureID
+    Handle.Color = WrapHandle.Color
+    Handle.Material = WrapHandle.Material
+    Handle.Transparency = WrapHandle.Transparency
+    WrapClone:Destroy()
+end
+
+local function RestoreSkin(Tool)
+    local Handle = Tool:FindFirstChild('Handle')
+    if not Handle then return end
+    local Tag = Handle:FindFirstChild('SkinTag')
+    if not Tag then return end
+    ClearAdded(Handle)
+    local OrigTex = Handle:GetAttribute('OrigTexture')
+    local OrigColor = Handle:GetAttribute('OrigColor')
+    local OrigMat = Handle:GetAttribute('OrigMaterial')
+    local OrigTrans = Handle:GetAttribute('OrigTransparency')
+    if OrigTex then Handle.TextureID = OrigTex end
+    if OrigColor then Handle.Color = OrigColor end
+    if OrigMat then Handle.Material = OrigMat end
+    if OrigTrans then Handle.Transparency = OrigTrans end
+    Tag:Destroy()
+end
+
+local function ApplyBeamChanger()
+    local Config = getgenv().HoodCustoms['BeamChanger']
+    if not Config['Enabled'] or Config['Beam'] == 'None' then return end
+    if BeamApplied == Config['Beam'] then return end
+    local DataFolder = LocalPlayer:FindFirstChild('DataFolder')
+    if not DataFolder then return end
+    local InventoryData = DataFolder:FindFirstChild('InventoryData')
+    if not InventoryData then return end
+    local BulletBeams = InventoryData:FindFirstChild('BulletBeams')
+    local EquippedBulletBeams = DataFolder:FindFirstChild('EquippedBulletBeams')
+    if BulletBeams and BulletBeams:IsA('StringValue') then
+        local BulletData = {}
+        for _, Hash in BeamHashes do BulletData[Hash] = { Name = Config['Beam'] } end
+        BulletBeams.Value = HttpService:JSONEncode(BulletData)
+    end
+    if EquippedBulletBeams and EquippedBulletBeams:IsA('StringValue') then
+        local EquippedData = {}
+        for Weapon, Hash in BeamHashes do EquippedData['[' .. Weapon .. ']'] = Hash end
+        EquippedBulletBeams.Value = HttpService:JSONEncode(EquippedData)
+    end
+    BeamApplied = Config['Beam']
+end
+
+local Reloading = false
+local function FastReload()
+    local Config = getgenv().HoodCustoms['FastReload']
+    if not Config['Enabled'] or Reloading then return end
+    local Char = LocalPlayer.Character
+    if not Char then return end
+    local Tool = Char:FindFirstChildOfClass('Tool')
+    if not Tool then return end
+    local Script = Tool:FindFirstChild('Script')
+    if not Script then return end
+    local Ammo = Script:FindFirstChild('Ammo')
+    local MaxAmmo = Script:FindFirstChild('MaxAmmo')
+    if not Ammo or not MaxAmmo then return end
+    local ClientAmmo = Ammo:FindFirstChild('CLIENT')
+    if not ClientAmmo then return end
+    if ClientAmmo.Value > 0 then return end
+    local BodyEffects = Char:FindFirstChild('BodyEffects')
+    local ReloadingFlag = BodyEffects and BodyEffects:FindFirstChild('Reloading_CLIENT')
+    Reloading = true
+    ReplicatedStorage.MainEvent:FireServer('Reload', Tool)
+    task.wait(Config['ReloadTime'])
+    ClientAmmo.Value = MaxAmmo.Value
+    if ReloadingFlag then ReloadingFlag.Value = false end
+    Reloading = false
+end
+
+-- Start Skin/Reload Loops
+if SkinChangerConnection then SkinChangerConnection:Disconnect() end
+SkinChangerConnection = RunService.RenderStepped:Connect(function()
+    local Char = LocalPlayer.Character
+    if Char then
+        for GunName, Cfg in pairs(getgenv().HoodCustoms['Skins']) do
+            local Tool = Char:FindFirstChild(GunName)
+            if Tool then
+                if Cfg['Enabled'] then ApplySkin(Tool, GunName, Cfg['Skin']) else RestoreSkin(Tool) end
+            end
+        end
+    end
+    ApplyBeamChanger()
+end)
+
+if FastReloadConnection then FastReloadConnection:Disconnect() end
+FastReloadConnection = RunService.Heartbeat:Connect(FastReload)
+
+-- ====================== GUI ======================
+local Window = Library:Window({
+    Name = "Visual Fun",
+    GradientTitle = { Enabled = true, Start = Color3.fromRGB(255, 100, 150), Middle = Color3.fromRGB(100, 200, 255), End = Color3.fromRGB(150, 100, 255), Speed = 1.5 }
+})
+
+-- ===== VISUALS TAB =====
+local VisualsTab = Window:Page({Name = "Visuals", Columns = 1})
+local SkySection = VisualsTab:Section({Name = "Skybox", Side = 1})
+local WeatherSection = VisualsTab:Section({Name = "Weather", Side = 1})
+local MaterialSection = VisualsTab:Section({Name = "World Material", Side = 1})
+
+SkySection:Toggle({ Name = "Enable Skybox", Default = false, Flag = "SkyEnable", Callback = function(Value) if Value then applySkybox(CurrentSkyName) else applySkybox("Default") end end })
+SkySection:Dropdown({ Name = "Skybox Type", Flag = "Skybox", Items = {"Default", "Night", "Space", "Sunset", "Orange Apocalypse", "Dusty Desert", "Purple Storm", "Dark Purple", "Lavender", "Green Toxic", "Toxic Waste", "Blood Red", "Crimson", "Neon Blue", "Cloudy"}, Default = "Default", MaxSize = 250, Callback = function(Value) CurrentSkyName = Value; if Library.Flags["SkyEnable"] and Library.Flags["SkyEnable"].Value then applySkybox(Value) end end })
+SkySection:Toggle({ Name = "Skybox Spin", Default = false, Flag = "SkySpin", Callback = function(Value) SkySpinEnabled = Value; toggleSkySpin(Value, SkySpinSpeed) end })
+SkySection:Slider({ Name = "Spin Speed", Flag = "SkySpinSpeed", Min = 1, Max = 100, Default = 15, ValueType = "Number", Callback = function(Value) SkySpinSpeed = Value; if SkySpinEnabled then toggleSkySpin(true, Value) end end })
+
+WeatherSection:Toggle({ Name = "Enable Fog", Default = false, Flag = "FogEnable", Callback = function(Value) FogEnabled = Value; local color = Library.Flags["FogColor"] and Library.Flags["FogColor"].Color or Color3.fromRGB(192, 192, 192); setFog(Value, color) end })
+WeatherSection:Label("Fog Color", "Left"):Colorpicker({ Name = "Fog Color Picker", Flag = "FogColor", Default = Color3.fromRGB(180, 180, 200), Callback = function(Value) if FogEnabled then Lighting.FogColor = Value end end })
+
+MaterialSection:Toggle({ Name = "Enable Material Change", Default = false, Flag = "MaterialEnable", Callback = function(Value) MaterialEnabled = Value; if Value then setAllMaterials(CurrentMaterial) else restoreMaterials() end end })
+MaterialSection:Dropdown({ Name = "Select Material Type", Flag = "Material", Items = {"Concrete", "Plastic", "SmoothPlastic", "Metal", "DiamondPlate", "Grass", "Sand", "Rock", "Slate", "Brick", "Wood", "WoodPlanks", "Neon", "ForceField", "Glass", "Ice", "Marble", "Granite", "Fabric", "Cobblestone"}, Default = "Concrete", MaxSize = 200, Callback = function(Value) CurrentMaterial = Enum.Material[Value]; if MaterialEnabled then setAllMaterials(CurrentMaterial) end end })
+
+-- ===== SETTINGS TAB =====
+local SettingsTab = Window:Page({Name = "Settings", Columns = 1})
+local GUISettingsSection = SettingsTab:Section({Name = "GUI Settings", Side = 1})
+local CombatSection = SettingsTab:Section({Name = "Combat / Skins", Side = 1})
+
+-- GUI Settings
+GUISettingsSection:Colorpicker({ Name = "GUI Accent Color", Flag = "GUIAccentColor", Default = Color3.fromRGB(31, 226, 130), Callback = function(Value) Library:ChangeTheme("Accent", Value) end })
+GUISettingsSection:Keybind({ Name = "Toggle GUI Keybind", Flag = "GUIToggleKeybind", Default = Enum.KeyCode.RightShift, Mode = "Toggle", Callback = function(Value) Library.MenuKeybind = tostring(Value); Library:Notification("Menu keybind updated to: " .. tostring(Value), 3, Color3.fromRGB(100, 255, 150)) end })
+GUISettingsSection:Button({ Name = "Unload Script", Risky = true, Callback = function()
+    restoreMaterials(); applySkybox("Default"); setFog(false); toggleSkySpin(false)
+    if SkyEnforceConnection then SkyEnforceConnection:Disconnect() end
+    if MaterialRefreshConnection then MaterialRefreshConnection:Disconnect() end
+    if SkinChangerConnection then SkinChangerConnection:Disconnect() end
+    if FastReloadConnection then FastReloadConnection:Disconnect() end
+    local Char = LocalPlayer.Character
+    if Char then
+        for GunName, _ in pairs(getgenv().HoodCustoms['Skins']) do
+            local Tool = Char:FindFirstChild(GunName)
+            if Tool then RestoreSkin(Tool) end
+        end
+    end
+    Library:Unload()
+    Library:Notification("Script unloaded!", 3, Color3.fromRGB(255, 100, 100))
+end })
+
+-- Combat / Skins Section
+CombatSection:Label("=== FAST RELOAD ===", "Left")
+CombatSection:Toggle({ Name = "Enable Fast Reload", Default = false, Flag = "FastReloadEnable", Callback = function(Value) getgenv().HoodCustoms['FastReload']['Enabled'] = Value end })
+CombatSection:Slider({ Name = "Reload Time (sec)", Flag = "FastReloadTime", Min = 0.1, Max = 2.0, Default = 0.5, ValueType = "Number", Callback = function(Value) getgenv().HoodCustoms['FastReload']['ReloadTime'] = Value end })
+
+CombatSection:Label("=== BEAM CHANGER ===", "Left")
+CombatSection:Toggle({ Name = "Enable Beam Changer", Default = false, Flag = "BeamEnable", Callback = function(Value) getgenv().HoodCustoms['BeamChanger']['Enabled'] = Value; BeamApplied = nil end })
+CombatSection:Dropdown({ Name = "Select Beam", Flag = "BeamType", Items = {"None", "Beta", "Rainbow", "Red", "Blue", "Orange", "Green", "Hallows", "Kirumi", "Lightning", "Kitty"}, Default = "None", MaxSize = 150, Callback = function(Value) getgenv().HoodCustoms['BeamChanger']['Beam'] = Value; BeamApplied = nil end })
+
+CombatSection:Label("=== GUN SKINS ===", "Left")
+
+-- Gun Skin Dropdowns
+local SkinList = {"None", "Adurite", "Amethyst", "Arctic", "Arsenic", "Ascension", "Binary", "Black Cat", "Black Ice", "Blacksteel Dragon", "Candy Cane", "Crimson Fangs", "Cupid", "Deathbringer", "Ember", "Floral", "Green Tint", "Hallows", "Heartbringer", "Hell Dragon", "Hell Hound", "Hello Kitty", "Hexagram", "Kirumi", "Kitty", "Lightbringer", "Lovestruck", "Phoenix", "Poseidon", "Radiation", "Shiryus Breath", "Snow Dragon", "Strawberry Shortcake", "Void", "Void Dragon", "Volcanic Ashes"}
+
+local function CreateGunSkinUI(GunName)
+    CombatSection:Toggle({ Name = "Enable " .. GunName .. " Skin", Default = false, Flag = "EnableSkin_" .. GunName, Callback = function(Value) getgenv().HoodCustoms['Skins'][GunName]['Enabled'] = Value end })
+    CombatSection:Dropdown({ Name = GunName .. " Skin", Flag = "Skin_" .. GunName, Items = SkinList, Default = "None", MaxSize = 250, Callback = function(Value) getgenv().HoodCustoms['Skins'][GunName]['Skin'] = Value end })
+end
+
+CreateGunSkinUI("[Revolver]")
+CreateGunSkinUI("[DoubleBarrel]")
+CreateGunSkinUI("[SMG]")
+CreateGunSkinUI("[Shotgun]")
+CreateGunSkinUI("[Silencer]")
+CreateGunSkinUI("[TacticalShotgun]")
+CreateGunSkinUI("[Knife]")
+
+Library:Notification("Visual Fun loaded! Settings tab fixed!", 5, Color3.fromRGB(100, 255, 150))
