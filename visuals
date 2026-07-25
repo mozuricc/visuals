@@ -1,8 +1,3 @@
---[[
-    Visual Fun Script - COMPLETELY FIXED
-    Uses: https://github.com/sametexe001/sametlibs
-]]
-
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/sametexe001/sametlibs/refs/heads/main/Zoophack/Library.lua"))()
 
 local Lighting = game:GetService("Lighting")
@@ -11,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
 
 -- ====================== STORAGE ======================
 local OriginalMaterials = {}
@@ -28,7 +24,7 @@ local CurrentSkyName = "Default"
 local SkySpinEnabled = false
 local SkySpinSpeed = 15
 
--- Skin Changer Config
+-- ====================== SKIN CHANGER CONFIG ======================
 getgenv().HoodCustoms = {
     ['Skins'] = {
         ['[Revolver]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
@@ -37,12 +33,12 @@ getgenv().HoodCustoms = {
         ['[Shotgun]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
         ['[Silencer]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
         ['[TacticalShotgun]'] = { ['Enabled'] = false, ['Skin'] = 'None' },
-        ['[Knife]'] = { ['Enabled'] = false, ['Skin'] = 'None' }
     },
     ['BeamChanger'] = { ['Enabled'] = false, ['Beam'] = 'None' },
     ['FastReload'] = { ['Enabled'] = false, ['ReloadTime'] = 0.5 },
 }
 
+-- Beam Hashes for Hood Customs
 local BeamHashes = {
     DoubleBarrel = '109d1326878cc594bc1bb42d126250810999782f',
     Revolver = '539db315b53f77390c0aa74773158e25bedcdd6e',
@@ -52,7 +48,11 @@ local BeamHashes = {
 }
 local BeamApplied = nil
 
--- Save original sky
+-- Skin Lists
+local SkinList = {"None", "Adurite", "Amethyst", "Arctic", "Arsenic", "Ascension", "Binary", "Black Cat", "Black Ice", "Blacksteel Dragon", "Candy Cane", "Crimson Fangs", "Cupid", "Deathbringer", "Ember", "Floral", "Green Tint", "Hallows", "Heartbringer", "Hell Dragon", "Hell Hound", "Hello Kitty", "Hexagram", "Kirumi", "Kitty", "Lightbringer", "Lovestruck", "Phoenix", "Poseidon", "Radiation", "Shiryus Breath", "Snow Dragon", "Strawberry Shortcake", "Void", "Void Dragon", "Volcanic Ashes"}
+local BeamList = {"None", "Beta", "Rainbow", "Red", "Blue", "Orange", "Green", "Hallows", "Kirumi", "Lightning", "Kitty"}
+
+-- ====================== SAVE ORIGINAL SKY ======================
 local function saveOriginalSky()
     local sky = Lighting:FindFirstChildOfClass("Sky")
     if sky then
@@ -69,50 +69,12 @@ saveOriginalSky()
 -- ====================== WORKING SKYBOXES ======================
 local Skyboxes = {
     ["Default"] = "default",
-    ["Night"] = {
-        SkyboxBk = "rbxassetid://12064107", SkyboxDn = "rbxassetid://12064152", SkyboxFt = "rbxassetid://12064121",
-        SkyboxLf = "rbxassetid://12063984", SkyboxRt = "rbxassetid://12064115", SkyboxUp = "rbxassetid://12064131"
-    },
-    ["Space"] = {
-        SkyboxBk = "rbxassetid://149397692", SkyboxDn = "rbxassetid://149397686", SkyboxFt = "rbxassetid://149397697",
-        SkyboxLf = "rbxassetid://149397684", SkyboxRt = "rbxassetid://149397688", SkyboxUp = "rbxassetid://149397702"
-    },
-    ["Sunset"] = {
-        SkyboxBk = "rbxassetid://600830446", SkyboxDn = "rbxassetid://600831635", SkyboxFt = "rbxassetid://600832720",
-        SkyboxLf = "rbxassetid://600833862", SkyboxRt = "rbxassetid://600835177", SkyboxUp = "rbxassetid://600835875"
-    },
-    -- ORANGE/APOCALYPSE (from your images)
-    ["Orange Apocalypse"] = {
-        SkyboxBk = "rbxassetid://124235923", SkyboxDn = "rbxassetid://124235917", SkyboxFt = "rbxassetid://124235926",
-        SkyboxLf = "rbxassetid://124235914", SkyboxRt = "rbxassetid://124235920", SkyboxUp = "rbxassetid://124235928"
-    },
-    ["Dusty Desert"] = {
-        SkyboxBk = "rbxassetid://260178847", SkyboxDn = "rbxassetid://260178843", SkyboxFt = "rbxassetid://260178849",
-        SkyboxLf = "rbxassetid://260178842", SkyboxRt = "rbxassetid://260178845", SkyboxUp = "rbxassetid://260178851"
-    },
-    -- PURPLE/PURPLE STORM (from your images)
-    ["Purple Storm"] = {
-        SkyboxBk = "rbxassetid://202182363", SkyboxDn = "rbxassetid://202182358", SkyboxFt = "rbxassetid://202182366",
-        SkyboxLf = "rbxassetid://202182355", SkyboxRt = "rbxassetid://202182361", SkyboxUp = "rbxassetid://202182368"
-    },
-    ["Dark Purple"] = {
-        SkyboxBk = "rbxassetid://264215036", SkyboxDn = "rbxassetid://264215033", SkyboxFt = "rbxassetid://264215034",
-        SkyboxLf = "rbxassetid://264215032", SkyboxRt = "rbxassetid://264215035", SkyboxUp = "rbxassetid://264215037"
-    },
+
+    -- Ones that usually work on Hood Customs
     ["Lavender"] = {
         SkyboxBk = "rbxassetid://159454299", SkyboxDn = "rbxassetid://159454296", SkyboxFt = "rbxassetid://159454293",
         SkyboxLf = "rbxassetid://159454286", SkyboxRt = "rbxassetid://159454300", SkyboxUp = "rbxassetid://159454288"
     },
-    -- GREEN TOXIC (from your images)
-    ["Green Toxic"] = {
-        SkyboxBk = "rbxassetid://151165214", SkyboxDn = "rbxassetid://151165197", SkyboxFt = "rbxassetid://151165224",
-        SkyboxLf = "rbxassetid://151165191", SkyboxRt = "rbxassetid://151165206", SkyboxUp = "rbxassetid://151165227"
-    },
-    ["Toxic Waste"] = {
-        SkyboxBk = "rbxassetid://192096124", SkyboxDn = "rbxassetid://192095957", SkyboxFt = "rbxassetid://192096160",
-        SkyboxLf = "rbxassetid://192095935", SkyboxRt = "rbxassetid://192096058", SkyboxUp = "rbxassetid://192096184"
-    },
-    -- RED/BLOOD
     ["Blood Red"] = {
         SkyboxBk = "rbxassetid://401664839", SkyboxDn = "rbxassetid://401664862", SkyboxFt = "rbxassetid://401664960",
         SkyboxLf = "rbxassetid://401664881", SkyboxRt = "rbxassetid://401664901", SkyboxUp = "rbxassetid://401664926"
@@ -121,17 +83,61 @@ local Skyboxes = {
         SkyboxBk = "rbxassetid://367686703", SkyboxDn = "rbxassetid://367686687", SkyboxFt = "rbxassetid://367686711",
         SkyboxLf = "rbxassetid://367686682", SkyboxRt = "rbxassetid://367686691", SkyboxUp = "rbxassetid://367686717"
     },
-    -- NEON/CYAN
-    ["Neon Blue"] = {
-        SkyboxBk = "rbxassetid://591058823", SkyboxDn = "rbxassetid://591059876", SkyboxFt = "rbxassetid://591058104",
-        SkyboxLf = "rbxassetid://591057861", SkyboxRt = "rbxassetid://591057625", SkyboxUp = "rbxassetid://591059601"
+
+    -- Newer / more reliable ones
+    ["Pinkful Morning"] = {
+        SkyboxBk = "rbxassetid://12635309703", SkyboxDn = "rbxassetid://12635311686", SkyboxFt = "rbxassetid://12635312870",
+        SkyboxLf = "rbxassetid://12635313718", SkyboxRt = "rbxassetid://12635315817", SkyboxUp = "rbxassetid://12635316856"
     },
-    ["Cloudy"] = {
-        SkyboxBk = "rbxassetid://591058823", SkyboxDn = "rbxassetid://591059876", SkyboxFt = "rbxassetid://591058104",
-        SkyboxLf = "rbxassetid://591057861", SkyboxRt = "rbxassetid://591057625", SkyboxUp = "rbxassetid://591059601"
-    }
+    ["Vaporwave"] = {
+        SkyboxBk = "rbxassetid://8631780182", SkyboxDn = "rbxassetid://8631784904", SkyboxFt = "rbxassetid://8631769834",
+        SkyboxLf = "rbxassetid://8631777199", SkyboxRt = "rbxassetid://8631735555", SkyboxUp = "rbxassetid://8631782345"
+    },
+    ["Sunset"] = {
+        SkyboxBk = "rbxassetid://323494035", SkyboxDn = "rbxassetid://323494368", SkyboxFt = "rbxassetid://323494130",
+        SkyboxLf = "rbxassetid://323494252", SkyboxRt = "rbxassetid://323494067", SkyboxUp = "rbxassetid://323493360"
+    },
+    ["Blue"] = {
+        SkyboxBk = "http://www.roblox.com/asset/?version=1&id=135483466",
+        SkyboxDn = "http://www.roblox.com/asset/?version=1&id=135483484",
+        SkyboxFt = "http://www.roblox.com/asset/?version=1&id=135483461",
+        SkyboxLf = "http://www.roblox.com/asset/?version=1&id=135483495",
+        SkyboxRt = "http://www.roblox.com/asset/?version=1&id=135483499",
+        SkyboxUp = "http://www.roblox.com/asset/?version=1&id=135483475"
+    },
+    ["White to Purple"] = {
+        SkyboxBk = "rbxassetid://8107841671", SkyboxDn = "rbxassetid://6444884785", SkyboxFt = "rbxassetid://8107841671",
+        SkyboxLf = "rbxassetid://8107841671", SkyboxRt = "rbxassetid://8107841671", SkyboxUp = "rbxassetid://8107849791"
+    },
+    ["White to Pink"] = {
+        SkyboxBk = "http://www.roblox.com/asset/?id=11427769401",
+        SkyboxDn = "http://www.roblox.com/asset/?id=11427770685",
+        SkyboxFt = "http://www.roblox.com/asset/?id=11427769401",
+        SkyboxLf = "http://www.roblox.com/asset/?id=11427769401",
+        SkyboxRt = "http://www.roblox.com/asset/?id=11427769401",
+        SkyboxUp = "http://www.roblox.com/asset/?id=11427771954"
+    },
+
+    -- Extra classic ones that sometimes still work
+    ["Night"] = {
+        SkyboxBk = "rbxassetid://12064107", SkyboxDn = "rbxassetid://12064152", SkyboxFt = "rbxassetid://12064121",
+        SkyboxLf = "rbxassetid://12063984", SkyboxRt = "rbxassetid://12064115", SkyboxUp = "rbxassetid://12064131"
+    },
+    ["Space"] = {
+        SkyboxBk = "rbxassetid://149397692", SkyboxDn = "rbxassetid://149397686", SkyboxFt = "rbxassetid://149397697",
+        SkyboxLf = "rbxassetid://149397684", SkyboxRt = "rbxassetid://149397688", SkyboxUp = "rbxassetid://149397702"
+    },
+    ["Toxic Green"] = {
+        SkyboxBk = "rbxassetid://151165214", SkyboxDn = "rbxassetid://151165197", SkyboxFt = "rbxassetid://151165224",
+        SkyboxLf = "rbxassetid://151165191", SkyboxRt = "rbxassetid://151165206", SkyboxUp = "rbxassetid://151165227"
+    },
+    ["Dark Purple"] = {
+        SkyboxBk = "rbxassetid://264215036", SkyboxDn = "rbxassetid://264215033", SkyboxFt = "rbxassetid://264215034",
+        SkyboxLf = "rbxassetid://264215032", SkyboxRt = "rbxassetid://264215035", SkyboxUp = "rbxassetid://264215037"
+    },
 }
 
+-- ====================== SKYBOX FUNCTIONS ======================
 local function applySkybox(name)
     for _, sky in ipairs(Lighting:GetChildren()) do
         if sky:IsA("Sky") then sky:Destroy() end
@@ -357,20 +363,42 @@ end)
 if FastReloadConnection then FastReloadConnection:Disconnect() end
 FastReloadConnection = RunService.Heartbeat:Connect(FastReload)
 
--- ====================== GUI ======================
+-- ====================== WINDOW ======================
 local Window = Library:Window({
-    Name = "Visual Fun",
-    GradientTitle = { Enabled = true, Start = Color3.fromRGB(255, 100, 150), Middle = Color3.fromRGB(100, 200, 255), End = Color3.fromRGB(150, 100, 255), Speed = 1.5 }
+    Name = "REEKS",
+    GradientTitle = {
+        Enabled = true,
+        Start = Color3.fromRGB(255, 100, 150),
+        Middle = Color3.fromRGB(100, 200, 255),
+        End = Color3.fromRGB(150, 100, 255),
+        Speed = 1.5
+    }
 })
 
--- ===== VISUALS TAB =====
+-- ===== PAGES =====
 local VisualsTab = Window:Page({Name = "Visuals", Columns = 1})
+local SkinsTab = Window:Page({Name = "Skins", Columns = 1})
+local SettingsTab = Window:Page({Name = "Settings", Columns = 1})
+
+-- ===== VISUALS TAB =====
 local SkySection = VisualsTab:Section({Name = "Skybox", Side = 1})
 local WeatherSection = VisualsTab:Section({Name = "Weather", Side = 1})
 local MaterialSection = VisualsTab:Section({Name = "World Material", Side = 1})
 
 SkySection:Toggle({ Name = "Enable Skybox", Default = false, Flag = "SkyEnable", Callback = function(Value) if Value then applySkybox(CurrentSkyName) else applySkybox("Default") end end })
-SkySection:Dropdown({ Name = "Skybox Type", Flag = "Skybox", Items = {"Default", "Night", "Space", "Sunset", "Orange Apocalypse", "Dusty Desert", "Purple Storm", "Dark Purple", "Lavender", "Green Toxic", "Toxic Waste", "Blood Red", "Crimson", "Neon Blue", "Cloudy"}, Default = "Default", MaxSize = 250, Callback = function(Value) CurrentSkyName = Value; if Library.Flags["SkyEnable"] and Library.Flags["SkyEnable"].Value then applySkybox(Value) end end })
+SkySection:Dropdown({ 
+    Name = "Skybox Type", 
+    Flag = "Skybox", 
+    Items = {"Default", "Lavender", "Blood Red", "Crimson", "Pinkful Morning", "Vaporwave", "Sunset", "Blue", "White to Purple", "White to Pink", "Night", "Space", "Toxic Green", "Dark Purple"}, 
+    Default = "Default", 
+    MaxSize = 350, 
+    Callback = function(Value) 
+        CurrentSkyName = Value
+        if Library.Flags["SkyEnable"] and Library.Flags["SkyEnable"].Value then 
+            applySkybox(Value) 
+        end 
+    end 
+})
 SkySection:Toggle({ Name = "Skybox Spin", Default = false, Flag = "SkySpin", Callback = function(Value) SkySpinEnabled = Value; toggleSkySpin(Value, SkySpinSpeed) end })
 SkySection:Slider({ Name = "Spin Speed", Flag = "SkySpinSpeed", Min = 1, Max = 100, Default = 15, ValueType = "Number", Callback = function(Value) SkySpinSpeed = Value; if SkySpinEnabled then toggleSkySpin(true, Value) end end })
 
@@ -378,50 +406,25 @@ WeatherSection:Toggle({ Name = "Enable Fog", Default = false, Flag = "FogEnable"
 WeatherSection:Label("Fog Color", "Left"):Colorpicker({ Name = "Fog Color Picker", Flag = "FogColor", Default = Color3.fromRGB(180, 180, 200), Callback = function(Value) if FogEnabled then Lighting.FogColor = Value end end })
 
 MaterialSection:Toggle({ Name = "Enable Material Change", Default = false, Flag = "MaterialEnable", Callback = function(Value) MaterialEnabled = Value; if Value then setAllMaterials(CurrentMaterial) else restoreMaterials() end end })
-MaterialSection:Dropdown({ Name = "Select Material Type", Flag = "Material", Items = {"Concrete", "Plastic", "SmoothPlastic", "Metal", "DiamondPlate", "Grass", "Sand", "Rock", "Slate", "Brick", "Wood", "WoodPlanks", "Neon", "ForceField", "Glass", "Ice", "Marble", "Granite", "Fabric", "Cobblestone"}, Default = "Concrete", MaxSize = 200, Callback = function(Value) CurrentMaterial = Enum.Material[Value]; if MaterialEnabled then setAllMaterials(CurrentMaterial) end end })
+MaterialSection:Dropdown({ Name = "Select Material Type", Flag = "Material", Items = {"Concrete", "Plastic", "SmoothPlastic", "Metal", "DiamondPlate", "Grass", "Sand", "Rock", "Slate", "Brick", "Wood", "WoodPlanks", "Neon", "ForceField", "Glass", "Ice", "Marble", "Granite", "Fabric", "Cobblestone"}, Default = "Concrete", MaxSize = 300, Callback = function(Value) CurrentMaterial = Enum.Material[Value]; if MaterialEnabled then setAllMaterials(CurrentMaterial) end end })
 
--- ===== SETTINGS TAB =====
-local SettingsTab = Window:Page({Name = "Settings", Columns = 1})
-local GUISettingsSection = SettingsTab:Section({Name = "GUI Settings", Side = 1})
-local CombatSection = SettingsTab:Section({Name = "Combat / Skins", Side = 1})
+-- ===== SKINS TAB =====
+local SkinSection = SkinsTab:Section({Name = "Gun Skins", Side = 1})
+local BeamSection = SkinsTab:Section({Name = "Beam Changer", Side = 1})
+local ReloadSection = SkinsTab:Section({Name = "Fast Reload", Side = 1})
 
--- GUI Settings
-GUISettingsSection:Colorpicker({ Name = "GUI Accent Color", Flag = "GUIAccentColor", Default = Color3.fromRGB(31, 226, 130), Callback = function(Value) Library:ChangeTheme("Accent", Value) end })
-GUISettingsSection:Keybind({ Name = "Toggle GUI Keybind", Flag = "GUIToggleKeybind", Default = Enum.KeyCode.RightShift, Mode = "Toggle", Callback = function(Value) Library.MenuKeybind = tostring(Value); Library:Notification("Menu keybind updated to: " .. tostring(Value), 3, Color3.fromRGB(100, 255, 150)) end })
-GUISettingsSection:Button({ Name = "Unload Script", Risky = true, Callback = function()
-    restoreMaterials(); applySkybox("Default"); setFog(false); toggleSkySpin(false)
-    if SkyEnforceConnection then SkyEnforceConnection:Disconnect() end
-    if MaterialRefreshConnection then MaterialRefreshConnection:Disconnect() end
-    if SkinChangerConnection then SkinChangerConnection:Disconnect() end
-    if FastReloadConnection then FastReloadConnection:Disconnect() end
-    local Char = LocalPlayer.Character
-    if Char then
-        for GunName, _ in pairs(getgenv().HoodCustoms['Skins']) do
-            local Tool = Char:FindFirstChild(GunName)
-            if Tool then RestoreSkin(Tool) end
-        end
-    end
-    Library:Unload()
-    Library:Notification("Script unloaded!", 3, Color3.fromRGB(255, 100, 100))
-end })
+-- Fast Reload
+ReloadSection:Toggle({ Name = "Enable Fast Reload", Default = false, Flag = "FastReloadEnable", Callback = function(Value) getgenv().HoodCustoms['FastReload']['Enabled'] = Value end })
+ReloadSection:Slider({ Name = "Reload Time (sec)", Flag = "FastReloadTime", Min = 0.1, Max = 2.0, Default = 0.5, ValueType = "Number", Callback = function(Value) getgenv().HoodCustoms['FastReload']['ReloadTime'] = Value end })
 
--- Combat / Skins Section
-CombatSection:Label("=== FAST RELOAD ===", "Left")
-CombatSection:Toggle({ Name = "Enable Fast Reload", Default = false, Flag = "FastReloadEnable", Callback = function(Value) getgenv().HoodCustoms['FastReload']['Enabled'] = Value end })
-CombatSection:Slider({ Name = "Reload Time (sec)", Flag = "FastReloadTime", Min = 0.1, Max = 2.0, Default = 0.5, ValueType = "Number", Callback = function(Value) getgenv().HoodCustoms['FastReload']['ReloadTime'] = Value end })
+-- Beam Changer (MaxSize increased)
+BeamSection:Toggle({ Name = "Enable Beam Changer", Default = false, Flag = "BeamEnable", Callback = function(Value) getgenv().HoodCustoms['BeamChanger']['Enabled'] = Value; BeamApplied = nil end })
+BeamSection:Dropdown({ Name = "Select Beam", Flag = "BeamType", Items = BeamList, Default = "None", MaxSize = 900, Callback = function(Value) getgenv().HoodCustoms['BeamChanger']['Beam'] = Value; BeamApplied = nil end })
 
-CombatSection:Label("=== BEAM CHANGER ===", "Left")
-CombatSection:Toggle({ Name = "Enable Beam Changer", Default = false, Flag = "BeamEnable", Callback = function(Value) getgenv().HoodCustoms['BeamChanger']['Enabled'] = Value; BeamApplied = nil end })
-CombatSection:Dropdown({ Name = "Select Beam", Flag = "BeamType", Items = {"None", "Beta", "Rainbow", "Red", "Blue", "Orange", "Green", "Hallows", "Kirumi", "Lightning", "Kitty"}, Default = "None", MaxSize = 150, Callback = function(Value) getgenv().HoodCustoms['BeamChanger']['Beam'] = Value; BeamApplied = nil end })
-
-CombatSection:Label("=== GUN SKINS ===", "Left")
-
--- Gun Skin Dropdowns
-local SkinList = {"None", "Adurite", "Amethyst", "Arctic", "Arsenic", "Ascension", "Binary", "Black Cat", "Black Ice", "Blacksteel Dragon", "Candy Cane", "Crimson Fangs", "Cupid", "Deathbringer", "Ember", "Floral", "Green Tint", "Hallows", "Heartbringer", "Hell Dragon", "Hell Hound", "Hello Kitty", "Hexagram", "Kirumi", "Kitty", "Lightbringer", "Lovestruck", "Phoenix", "Poseidon", "Radiation", "Shiryus Breath", "Snow Dragon", "Strawberry Shortcake", "Void", "Void Dragon", "Volcanic Ashes"}
-
+-- Gun Skins
 local function CreateGunSkinUI(GunName)
-    CombatSection:Toggle({ Name = "Enable " .. GunName .. " Skin", Default = false, Flag = "EnableSkin_" .. GunName, Callback = function(Value) getgenv().HoodCustoms['Skins'][GunName]['Enabled'] = Value end })
-    CombatSection:Dropdown({ Name = GunName .. " Skin", Flag = "Skin_" .. GunName, Items = SkinList, Default = "None", MaxSize = 250, Callback = function(Value) getgenv().HoodCustoms['Skins'][GunName]['Skin'] = Value end })
+    SkinSection:Toggle({ Name = "Enable " .. GunName .. " Skin", Default = false, Flag = "EnableSkin_" .. GunName, Callback = function(Value) getgenv().HoodCustoms['Skins'][GunName]['Enabled'] = Value end })
+    SkinSection:Dropdown({ Name = GunName .. " Skin", Flag = "Skin_" .. GunName, Items = SkinList, Default = "None", MaxSize = 300, Callback = function(Value) getgenv().HoodCustoms['Skins'][GunName]['Skin'] = Value end })
 end
 
 CreateGunSkinUI("[Revolver]")
@@ -430,6 +433,119 @@ CreateGunSkinUI("[SMG]")
 CreateGunSkinUI("[Shotgun]")
 CreateGunSkinUI("[Silencer]")
 CreateGunSkinUI("[TacticalShotgun]")
-CreateGunSkinUI("[Knife]")
 
-Library:Notification("Visual Fun loaded! Settings tab fixed!", 5, Color3.fromRGB(100, 255, 150))
+-- ===== SETTINGS TAB =====
+local SettingsSection = SettingsTab:Section({Name = "Settings", Side = 1})
+
+-- Proper GUI Toggle Keybind (uses library system)
+SettingsSection:Label("GUI Toggle Keybind", "Left"):Keybind({
+    Name = "GUI Toggle Keybind",
+    Flag = "MenuKeybind",
+    Default = Enum.KeyCode.P,
+    Mode = "Toggle",
+    Callback = function(Value)
+        Library.MenuKeybind = Library.Flags["MenuKeybind"].Key
+        Library:Notification("GUI keybind updated to " .. tostring(Library.MenuKeybind.Name), 3, Color3.fromRGB(100, 255, 150))
+    end
+})
+
+-- Set initial keybind
+Library.MenuKeybind = Enum.KeyCode.P
+
+SettingsSection:Separator()
+
+-- GUI Accent Color
+SettingsSection:Label("GUI Accent Color", "Left")
+SettingsSection:Colorpicker({
+    Name = "GUI Accent Color",
+    Flag = "GUIAccentColor",
+    Default = Color3.fromRGB(31, 226, 130),
+    Callback = function(Value)
+        Library:ChangeTheme("Accent", Value)
+    end
+})
+
+SettingsSection:Separator()
+
+-- Tweening Settings
+SettingsSection:Label("Animation Settings", "Left")
+SettingsSection:Dropdown({
+    Name = "Tweening Style",
+    Flag = "TweeningStyle",
+    Items = {"Linear", "Sine", "Quad", "Cubic", "Quart", "Quint", "Exponential", "Circular", "Back", "Elastic", "Bounce"},
+    Default = "Exponential",
+    MaxSize = 300,
+    Callback = function(Value)
+        Library.Tween.Style = Enum.EasingStyle[Value]
+    end
+})
+
+SettingsSection:Dropdown({
+    Name = "Tweening Direction",
+    Flag = "TweeningDirection",
+    Items = {"In", "Out", "InOut"},
+    Default = "Out",
+    MaxSize = 300,
+    Callback = function(Value)
+        Library.Tween.Direction = Enum.EasingDirection[Value]
+    end
+})
+
+SettingsSection:Slider({
+    Name = "Tweening Time",
+    Flag = "TweeningTime",
+    Min = 0,
+    Max = 5,
+    Default = 0.25,
+    Decimals = 0.01,
+    ValueType = "Number",
+    Callback = function(Value)
+        Library.Tween.Time = Value
+    end
+})
+
+SettingsSection:Separator()
+
+-- Watermark Toggle
+SettingsSection:Toggle({
+    Name = "Show Watermark",
+    Default = false,
+    Flag = "WatermarkToggle",
+    Callback = function(Value)
+        Watermark:SetVisibility(Value)
+    end
+})
+
+SettingsSection:Separator()
+
+-- Unload Button
+SettingsSection:Button({
+    Name = "Unload Script",
+    Risky = true,
+    Callback = function()
+        restoreMaterials()
+        applySkybox("Default")
+        setFog(false)
+        toggleSkySpin(false)
+        if SkyEnforceConnection then SkyEnforceConnection:Disconnect() end
+        if MaterialRefreshConnection then MaterialRefreshConnection:Disconnect() end
+        if SkinChangerConnection then SkinChangerConnection:Disconnect() end
+        if FastReloadConnection then FastReloadConnection:Disconnect() end
+        local Char = LocalPlayer.Character
+        if Char then
+            for GunName, _ in pairs(getgenv().HoodCustoms['Skins']) do
+                local Tool = Char:FindFirstChild(GunName)
+                if Tool then RestoreSkin(Tool) end
+            end
+        end
+        Library:Unload()
+        Library:Notification("Script unloaded!", 3, Color3.fromRGB(255, 100, 100))
+    end
+})
+
+-- ===== WATERMARK =====
+local Watermark = Library:Watermark("REEKS", {"77974153657891", Color3.fromRGB(100, 255, 150)})
+Watermark:SetVisibility(false)
+
+-- ====================== NOTIFICATION ======================
+Library:Notification("REEKS Loaded! Press P (or your set key) to toggle GUI.", 5, Color3.fromRGB(100, 255, 150))
