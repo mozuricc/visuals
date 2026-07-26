@@ -49,8 +49,8 @@ local BeamHashes = {
 local BeamApplied = nil
 
 -- Skin Lists
-local SkinList = {"None", "Adurite", "Amethyst", "Arctic", "Arsenic", "Ascension", "Binary", "Black Cat", "Black Ice", "Blacksteel Dragon", "Candy Cane", "Crimson Fangs", "Cupid", "Deathbringer", "Ember", "Floral", "Green Tint", "Hallows", "Heartbringer", "Hell Dragon", "Hell Hound", "Hello Kitty", "Hexagram", "Kirumi", "Kitty", "Lightbringer", "Lovestruck", "Phoenix", "Poseidon", "Radiation", "Shiryus Breath", "Snow Dragon", "Strawberry Shortcake", "Void", "Void Dragon", "Volcanic Ashes"}
-local BeamList = {"None", "Beta", "Rainbow", "Red", "Blue", "Orange", "Green", "Hallows", "Kirumi", "Lightning", "Kitty"}
+local SkinList = {"None", "Adurite", "Amethyst", "Arctic", "Arsenic", "Ascension", "Binary", "Black Cat", "Black Ice", "Blacksteel Dragon", "Candy Cane", "Crimson Fangs", "Cupid", "Deathbringer", "Ember", "Floral", "Hallows", "Heartbringer", "Hell Dragon", "Hell Hound", "Hello Kitty", "Hexagram", "Kirumi", "Kitty", "Lightbringer", "Lovestruck", "Poseidon", "Radiation", "Shiryus Breath", "Snow Dragon", "Strawberry Shortcake", "Void", "Void Dragon", "Volcanic Ashes"}
+local BeamList = {"None", "Beta", "Rainbow", "Green", "Hallows", "Kirumi", "Lightning", "Kitty"}
 
 -- ====================== SAVE ORIGINAL SKY ======================
 local function saveOriginalSky()
